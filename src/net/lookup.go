@@ -113,6 +113,20 @@ func ipVersion(network string) byte {
 // functions and by Dialers without a specified Resolver.
 var DefaultResolver = &Resolver{}
 
+var PublicDefineResolver ResolverInterface = DefaultResolver
+
+type ResolverInterface interface {
+	LookupAddr(ctx context.Context, addr string) (names []string, err error)
+	LookupTXT(ctx context.Context, name string) ([]string, error)
+	LookupNS(ctx context.Context, name string) ([]*NS, error)
+	LookupMX(ctx context.Context, name string) ([]*MX, error)
+	LookupSRV(ctx context.Context, service, proto, name string) (cname string, addrs []*SRV, err error)
+	LookupCNAME(ctx context.Context, host string) (cname string, err error)
+	LookupIPAddr(ctx context.Context, host string) ([]IPAddr, error)
+	LookupHost(ctx context.Context, host string) (addrs []string, err error)
+	LookupPort(ctx context.Context, network, service string) (port int, err error)
+}
+
 // A Resolver looks up names and numbers.
 //
 // A nil *Resolver is equivalent to a zero Resolver.
@@ -167,7 +181,7 @@ func (r *Resolver) getLookupGroup() *singleflight.Group {
 // LookupHost looks up the given host using the local resolver.
 // It returns a slice of that host's addresses.
 func LookupHost(host string) (addrs []string, err error) {
-	return DefaultResolver.LookupHost(context.Background(), host)
+	return PublicDefineResolver.LookupHost(context.Background(), host)
 }
 
 // LookupHost looks up the given host using the local resolver.
@@ -187,7 +201,7 @@ func (r *Resolver) LookupHost(ctx context.Context, host string) (addrs []string,
 // LookupIP looks up host using the local resolver.
 // It returns a slice of that host's IPv4 and IPv6 addresses.
 func LookupIP(host string) ([]IP, error) {
-	addrs, err := DefaultResolver.LookupIPAddr(context.Background(), host)
+	addrs, err := PublicDefineResolver.LookupIPAddr(context.Background(), host)
 	if err != nil {
 		return nil, err
 	}
@@ -329,7 +343,7 @@ func ipAddrsEface(addrs []IPAddr) []interface{} {
 
 // LookupPort looks up the port for the given network and service.
 func LookupPort(network, service string) (port int, err error) {
-	return DefaultResolver.LookupPort(context.Background(), network, service)
+	return PublicDefineResolver.LookupPort(context.Background(), network, service)
 }
 
 // LookupPort looks up the port for the given network and service.
@@ -365,7 +379,7 @@ func (r *Resolver) LookupPort(ctx context.Context, network, service string) (por
 // contain DNS "CNAME" records, as long as host resolves to
 // address records.
 func LookupCNAME(host string) (cname string, err error) {
-	return DefaultResolver.lookupCNAME(context.Background(), host)
+	return PublicDefineResolver.LookupCNAME(context.Background(), host)
 }
 
 // LookupCNAME returns the canonical name for the given host.
@@ -392,7 +406,7 @@ func (r *Resolver) LookupCNAME(ctx context.Context, host string) (cname string, 
 // publishing SRV records under non-standard names, if both service
 // and proto are empty strings, LookupSRV looks up name directly.
 func LookupSRV(service, proto, name string) (cname string, addrs []*SRV, err error) {
-	return DefaultResolver.lookupSRV(context.Background(), service, proto, name)
+	return PublicDefineResolver.LookupSRV(context.Background(), service, proto, name)
 }
 
 // LookupSRV tries to resolve an SRV query of the given service,
@@ -410,7 +424,7 @@ func (r *Resolver) LookupSRV(ctx context.Context, service, proto, name string) (
 
 // LookupMX returns the DNS MX records for the given domain name sorted by preference.
 func LookupMX(name string) ([]*MX, error) {
-	return DefaultResolver.lookupMX(context.Background(), name)
+	return PublicDefineResolver.LookupMX(context.Background(), name)
 }
 
 // LookupMX returns the DNS MX records for the given domain name sorted by preference.
@@ -420,7 +434,7 @@ func (r *Resolver) LookupMX(ctx context.Context, name string) ([]*MX, error) {
 
 // LookupNS returns the DNS NS records for the given domain name.
 func LookupNS(name string) ([]*NS, error) {
-	return DefaultResolver.lookupNS(context.Background(), name)
+	return PublicDefineResolver.LookupNS(context.Background(), name)
 }
 
 // LookupNS returns the DNS NS records for the given domain name.
@@ -430,7 +444,7 @@ func (r *Resolver) LookupNS(ctx context.Context, name string) ([]*NS, error) {
 
 // LookupTXT returns the DNS TXT records for the given domain name.
 func LookupTXT(name string) ([]string, error) {
-	return DefaultResolver.lookupTXT(context.Background(), name)
+	return PublicDefineResolver.LookupTXT(context.Background(), name)
 }
 
 // LookupTXT returns the DNS TXT records for the given domain name.
@@ -444,7 +458,7 @@ func (r *Resolver) LookupTXT(ctx context.Context, name string) ([]string, error)
 // When using the host C library resolver, at most one result will be
 // returned. To bypass the host resolver, use a custom Resolver.
 func LookupAddr(addr string) (names []string, err error) {
-	return DefaultResolver.lookupAddr(context.Background(), addr)
+	return PublicDefineResolver.LookupAddr(context.Background(), addr)
 }
 
 // LookupAddr performs a reverse lookup for the given address, returning a list
